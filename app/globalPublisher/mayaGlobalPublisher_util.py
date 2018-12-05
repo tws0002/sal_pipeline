@@ -1,3 +1,4 @@
+import subprocess, os
 import maya.cmds as cmds
 
 def isGpuCacheNode(gpuCacheNode):
@@ -46,6 +47,17 @@ def loadGpuCachePlugin():
 		except:
 			raise Exception('Error loading gpuCache plugin!')
 
+def loadRedshiftPlugin():
+	'''
+	Load Redshift plugin
+	'''
+	# Load gpuCache plugin
+	if not cmds.pluginInfo('redshift4maya',q=True,l=True):
+		try:
+			cmds.loadPlugin('redshift4maya', quiet=True)
+		except:
+			raise Exception('Error loading redshift4maya plugin!')
+
 def exportGpuCache(objName , dest, filename):
 	'''
 	Export GPU cache
@@ -71,3 +83,39 @@ def exportGpuCache(objName , dest, filename):
 					fileName 	= filename)
 
 	return str(result)
+
+def exportRSProxy(objName, dest, rsfilename):
+	'''
+	Create redshift proxy data 
+
+	file 
+		-force 
+		-options "exportConnectivity=0;enableCompression=0;" 
+		-typ "Redshift Proxy" 
+		-pr 
+		-es "C:/Users/siras/Desktop/sphere_test.rs";
+		
+	rsProxy 
+		-fp "C:/Users/siras/Desktop/sphere_test.rs" 
+		-sl;
+
+	cmds.rsProxy(fp = "C:/Users/siras/Desktop/sphere_test2.rs", sl=True)
+	'''
+	loadRedshiftPlugin()
+
+	cmds.select(objName)
+
+	filePath = dest + '/' + rsfilename
+
+	# Export Rs proxy
+	if os.path.exists( os.path.dirname(dest) ):
+		cmds.rsProxy(fp = filePath, sl=True)
+
+	return filePath
+
+def subprocess_call(command):
+	maya 		= subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+	out,err 	= maya.communicate()
+	exitcode 	= maya.returncode
+
+	return out, err, exitcode

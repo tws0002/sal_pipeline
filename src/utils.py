@@ -16,7 +16,10 @@ except ImportError:
 	from PySide import __version__ as QtVersion
 	# import shiboken
   
-import os, sys, zipfile
+import os, sys, zipfile, logging
+
+logger = logging.getLogger( __name__.split('.')[-1] )
+logger.addHandler(logging.NullHandler())
 
 class windows(object):
 
@@ -129,8 +132,13 @@ class utils(object):
 		path = outputdir + '/' + filename
 
 		if not os.path.exists( outputdir) :
-			print (outputdir + ' : not found.')
-			return
+			logger.warning (outputdir + ' : not found.')
+
+			try :
+				os.mkdir(outputdir)
+			except Exception as e :
+				logger.error(e)
+				return
 
 		import maya.OpenMaya as openMaya
 		import maya.OpenMayaUI as openMayaUI
@@ -141,15 +149,39 @@ class utils(object):
 
 		try:
 			view.readColorBuffer(image, True)
+			image.resize(448,252)
 			image.writeToFile(path, ext)
 
-			print ('Capture success : ' + path )
+			logger.info ('Capture success : ' + path )
 			return path
 		except Exception as e:
-			print ('cannot capture')
+			logger.error ('cannot capture')
+			logger.error(e)
 
 		return False
 
+class redshiftUtils :
+
+	def __init__(self):
+		pass
+
+	def redshiftUpdateActiveAovList(self):
+		""" Update redshift aov list in render setting window
+		"""
+		import maya.mel as mel
+		
+		mel.eval("redshiftUpdateActiveAovList();")
+
+def cleanOldShelf(shelfname):
+	import maya.cmds as cmds
+	
+	if cmds.shelfLayout(shelfname, ex=1):
+		if cmds.shelfLayout(shelfname, q=1, ca=1):
+			for each in cmds.shelfLayout(shelfname, q=1, ca=1):
+				print(each)
+				cmds.deleteUI(each)
+
+		
 if __name__ == '__main__':
 	
 	# Test inputDialog
